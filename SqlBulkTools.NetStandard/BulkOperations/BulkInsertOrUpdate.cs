@@ -1,4 +1,5 @@
-﻿using SqlBulkTools.Enumeration;
+﻿using SqlBulkTools.BulkCopy;
+using SqlBulkTools.Enumeration;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -56,23 +57,30 @@ namespace SqlBulkTools
         {
             var propertyName = BulkOperationsHelper.GetPropertyName(columnName);
 
-            if (propertyName == null)
-                throw new NullReferenceException("MatchTargetOn column name can't be null.");
+            MatchTargetOn(propertyName);
 
-            _matchTargetOn.Add(propertyName);
-
-            return this;
+			return this;
         }
 
-        /// <summary>
-        /// At least one MatchTargetOn is required for correct configuration. MatchTargetOn is the matching clause for evaluating
-        /// each row in table. This is usally set to the unique identifier in the table (e.g. Id). Multiple MatchTargetOn members are allowed
-        /// for matching composite relationships.
-        /// </summary>
-        /// <param name="columnName"></param>
-        /// <param name="collation">Only explicitly set the collation if there is a collation conflict.</param>
-        /// <returns></returns>
-        public BulkInsertOrUpdate<T> MatchTargetOn(Expression<Func<T, object>> columnName, string collation)
+		public BulkInsertOrUpdate<T> MatchTargetOn(string propertyName)
+		{
+			if (propertyName == null)
+				throw new NullReferenceException("MatchTargetOn column name can't be null.");
+
+			_matchTargetOn.Add(propertyName);
+
+			return this;
+		}
+
+		/// <summary>
+		/// At least one MatchTargetOn is required for correct configuration. MatchTargetOn is the matching clause for evaluating
+		/// each row in table. This is usally set to the unique identifier in the table (e.g. Id). Multiple MatchTargetOn members are allowed
+		/// for matching composite relationships.
+		/// </summary>
+		/// <param name="columnName"></param>
+		/// <param name="collation">Only explicitly set the collation if there is a collation conflict.</param>
+		/// <returns></returns>
+		public BulkInsertOrUpdate<T> MatchTargetOn(Expression<Func<T, object>> columnName, string collation)
         {
             var propertyName = BulkOperationsHelper.GetPropertyName(columnName);
 
@@ -89,22 +97,28 @@ namespace SqlBulkTools
         /// Sets the identity column for the table. Required if an Identity column exists in table and one of the two
         /// following conditions is met: (1) MatchTargetOn list contains an identity column (2) AddAllColumns is used in setup.
         /// </summary>
-        /// <param name="columnName"></param>
+        /// <param name="propertyName"></param>
         /// <returns></returns>
-        public BulkInsertOrUpdate<T> SetIdentityColumn(Expression<Func<T, object>> columnName)
+        public BulkInsertOrUpdate<T> SetIdentityColumn(Expression<Func<T, object>> propertyName)
         {
-            SetIdentity(columnName);
+            SetIdentity(propertyName);
             return this;
         }
 
-        /// <summary>
-        /// Sets the identity column for the table. Required if an Identity column exists in table and one of the two
-        /// following conditions is met: (1) MatchTargetOn list contains an identity column (2) AddAllColumns is used in setup.
-        /// </summary>
-        /// <param name="columnName"></param>
-        /// <param name="outputIdentity"></param>
-        /// <returns></returns>
-        public BulkInsertOrUpdate<T> SetIdentityColumn(Expression<Func<T, object>> columnName, ColumnDirectionType outputIdentity)
+		public BulkInsertOrUpdate<T> SetIdentityColumn(string propertyName)
+		{
+			SetIdentityByPropertyName(propertyName);
+			return this;
+		}
+
+		/// <summary>
+		/// Sets the identity column for the table. Required if an Identity column exists in table and one of the two
+		/// following conditions is met: (1) MatchTargetOn list contains an identity column (2) AddAllColumns is used in setup.
+		/// </summary>
+		/// <param name="columnName"></param>
+		/// <param name="outputIdentity"></param>
+		/// <returns></returns>
+		public BulkInsertOrUpdate<T> SetIdentityColumn(Expression<Func<T, object>> columnName, ColumnDirectionType outputIdentity)
         {
             base.SetIdentity(columnName, outputIdentity);
             return this;

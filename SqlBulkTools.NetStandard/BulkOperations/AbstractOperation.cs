@@ -71,30 +71,40 @@ namespace SqlBulkTools
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="columnName"></param>
+        /// <param name="getPropertyName"></param>
         /// <exception cref="SqlBulkToolsException"></exception>
 
-        protected void SetIdentity(Expression<Func<T, object>> columnName)
+        protected void SetIdentity(Expression<Func<T, object>> getPropertyName)
         {
-            var propertyName = BulkOperationsHelper.GetPropertyName(columnName);
+            var propertyName = BulkOperationsHelper.GetPropertyName(getPropertyName);
 
             if (propertyName == null)
                 throw new SqlBulkToolsException("SetIdentityColumn column name can't be null");
 
-            if (_identityColumn == null)           
-                _identityColumn = BulkOperationsHelper.GetActualColumn(_customColumnMappings, propertyName);
-                            
-            else           
-                throw new SqlBulkToolsException("Can't have more than one identity column");           
+            SetIdentityByPropertyName(propertyName);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="parameterToCheck"></param>
-        /// <typeparam name="TParameter"></typeparam>
-        /// <returns></returns>
-        public static TParameter GetParameterValue<TParameter>(Expression<Func<TParameter>> parameterToCheck)
+		protected void SetIdentityByPropertyName(string propertyName)
+		{
+            SetIdentityByColumnName(BulkOperationsHelper.GetActualColumn(_customColumnMappings, propertyName));
+		}
+
+		protected void SetIdentityByColumnName(string columnName)
+		{
+			if (_identityColumn == null)
+				_identityColumn = columnName;
+
+			else
+				throw new SqlBulkToolsException("Can't have more than one identity column");
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="parameterToCheck"></param>
+		/// <typeparam name="TParameter"></typeparam>
+		/// <returns></returns>
+		public static TParameter GetParameterValue<TParameter>(Expression<Func<TParameter>> parameterToCheck)
         {
             TParameter parameterValue = (TParameter)parameterToCheck.Compile().Invoke();
 

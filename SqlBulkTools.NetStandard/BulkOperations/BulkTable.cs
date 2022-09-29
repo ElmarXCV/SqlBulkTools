@@ -74,6 +74,17 @@ namespace SqlBulkTools.BulkCopy
 			return new BulkAddColumn<T>(bulk, _list, _tableName, _columns, _customColumnMappings, _schema, _bulkCopySettings, _propertyInfoList);
 		}
 
+		public BulkAddColumn<T> AddColumns(IEnumerable<ColumnMapping> columnMappings)
+        {
+			foreach (var columnMapping in columnMappings)
+            {
+                _columns.Add(columnMapping.PropertyName);
+				_customColumnMappings.Add(columnMapping.PropertyName, columnMapping.ColumnName);
+            }
+
+			return new BulkAddColumn<T>(bulk, _list, _tableName, _columns, _customColumnMappings, _schema, _bulkCopySettings, _propertyInfoList);
+		}
+
 		/// <summary>
 		/// Add each column that you want to include in the query. Only include the columns that are relevant to the 
 		/// procedure for best performance. 

@@ -51,23 +51,30 @@ namespace SqlBulkTools
         {
             var propertyName = BulkOperationsHelper.GetPropertyName(columnName);
 
-            if (propertyName == null)
-                throw new NullReferenceException("MatchTargetOn column name can't be null.");
+			MatchTargetOn(propertyName);
 
-            _matchTargetOn.Add(propertyName);
-
-            return this;
+			return this;
         }
 
-        /// <summary>
-        /// At least one MatchTargetOn is required for correct configuration. MatchTargetOn is the matching clause for evaluating
-        /// each row in table. This is usally set to the unique identifier in the table (e.g. Id). Multiple MatchTargetOn members are allowed
-        /// for matching composite relationships.
-        /// </summary>
-        /// <param name="columnName"></param>
-        /// <param name="collation">Only explicitly set the collation if there is a collation conflict.</param>
-        /// <returns></returns>
-        public BulkDelete<T> MatchTargetOn(Expression<Func<T, object>> columnName, string collation)
+		public BulkDelete<T> MatchTargetOn(string propertyName)
+		{
+			if (propertyName == null)
+				throw new NullReferenceException("MatchTargetOn column name can't be null.");
+
+			_matchTargetOn.Add(propertyName);
+
+			return this;
+		}
+
+		/// <summary>
+		/// At least one MatchTargetOn is required for correct configuration. MatchTargetOn is the matching clause for evaluating
+		/// each row in table. This is usally set to the unique identifier in the table (e.g. Id). Multiple MatchTargetOn members are allowed
+		/// for matching composite relationships.
+		/// </summary>
+		/// <param name="columnName"></param>
+		/// <param name="collation">Only explicitly set the collation if there is a collation conflict.</param>
+		/// <returns></returns>
+		public BulkDelete<T> MatchTargetOn(Expression<Func<T, object>> columnName, string collation)
         {
             var propertyName = BulkOperationsHelper.GetPropertyName(columnName);
 
@@ -117,14 +124,20 @@ namespace SqlBulkTools
             return this;
         }
 
-        /// <summary>
-        /// Sets the identity column for the table. Required if an Identity column exists in table and one of the two
-        /// following conditions is met: (1) MatchTargetOn list contains an identity column (2) AddAllColumns is used in setup.
-        /// </summary>
-        /// <param name="columnName"></param>
-        /// <param name="outputIdentity"></param>
-        /// <returns></returns>
-        public BulkDelete<T> SetIdentityColumn(Expression<Func<T, object>> columnName, ColumnDirectionType outputIdentity)
+		public BulkDelete<T> SetIdentityColumn(string propertyName)
+		{
+			SetIdentityByPropertyName(propertyName);
+			return this;
+		}
+
+		/// <summary>
+		/// Sets the identity column for the table. Required if an Identity column exists in table and one of the two
+		/// following conditions is met: (1) MatchTargetOn list contains an identity column (2) AddAllColumns is used in setup.
+		/// </summary>
+		/// <param name="columnName"></param>
+		/// <param name="outputIdentity"></param>
+		/// <returns></returns>
+		public BulkDelete<T> SetIdentityColumn(Expression<Func<T, object>> columnName, ColumnDirectionType outputIdentity)
         {
             base.SetIdentity(columnName, outputIdentity);
             return this;
@@ -292,11 +305,13 @@ namespace SqlBulkTools
 
         private string GetCommand(SqlConnection connection)
         {
-            string comm = "MERGE INTO " + BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName) + $" WITH ({_tableHint}) AS Target " +
+			var matchTargetOn = _matchTargetOn.Select(x => BulkOperationsHelper.GetActualColumn(_customColumnMappings, x)).ToArray();
+
+			string comm = "MERGE INTO " + BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName) + $" WITH ({_tableHint}) AS Target " +
                           "USING " + Constants.TempTableName + " AS Source " +
-                          BulkOperationsHelper.BuildJoinConditionsForInsertOrUpdate(_matchTargetOn.ToArray(),
+                          BulkOperationsHelper.BuildJoinConditionsForInsertOrUpdate(matchTargetOn,
                           Constants.SourceAlias, Constants.TargetAlias, base._collationColumnDic, _nullableColumnDic) +
-                          "WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(), _deletePredicates, Constants.TargetAlias, base._collationColumnDic) +
+                          "WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(matchTargetOn, _deletePredicates, Constants.TargetAlias, base._collationColumnDic) +
                           "THEN DELETE " +
                           BulkOperationsHelper.GetOutputIdentityCmd(_identityColumn, _outputIdentity, Constants.TempOutputTableName,
                           OperationType.Delete) + "; " +
